@@ -2,46 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cyber Blackjack Ultimate</title>
+<title>Cyber Blackjack</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {
-    margin:0;
-    padding:0;
-    font-family: monospace;
-    background:#01010a;
-    color:#00eaff;
-    text-align:center;
+  margin:0; padding:0;
+  font-family: monospace;
+  background:#01010a;
+  color:#00eaff;
+  text-align:center;
 }
 h1 { text-shadow:0 0 15px #00eaff; margin-top:15px;}
 .game-container {
-    width: 360px;
-    margin: 20px auto;
-    padding:20px;
-    border-radius:15px;
-    background:#0c0c1a;
-    border:2px solid #00eaff;
-    box-shadow:0 0 20px rgba(0,234,255,0.3);
+  width: 360px;
+  margin: 20px auto;
+  padding:20px;
+  border-radius:15px;
+  background:#0c0c1a;
+  border:2px solid #00eaff;
+  box-shadow:0 0 20px rgba(0,234,255,0.3);
 }
 .hand {
-    display:flex;
-    justify-content:center;
-    gap:8px;
-    min-height:120px;
-    margin-bottom:15px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  min-height:120px;
+  margin-bottom:15px;
 }
 .card {
-    width:60px;
-    height:90px;
-    border-radius:8px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#0a0a1a;
-    border:1px solid #00eaff66;
-    box-shadow:0 0 8px #00eaff44;
-    font-size:18px;
-    transition:0.2s;
+  width:60px;
+  height:90px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#0a0a1a;
+  border:1px solid #00eaff66;
+  box-shadow:0 0 8px #00eaff44;
+  font-size:18px;
+  transition:0.2s;
 }
 .card.animate { transform: translateY(-20px); }
 .button { padding:10px 20px; border-radius:10px; border:none; margin:3px; cursor:pointer; font-weight:bold; transition:0.2s; }
@@ -67,6 +66,9 @@ h1 { text-shadow:0 0 15px #00eaff; margin-top:15px;}
     font-size:32px; font-weight:bold; text-shadow:0 0 10px #00eaff;
     z-index:999; display:none;
 }
+.leaderboard-box {
+    margin-top:15px; font-size:14px; border-top:1px solid #00eaff55; padding-top:5px;
+}
 </style>
 </head>
 <body>
@@ -80,6 +82,10 @@ h1 { text-shadow:0 0 15px #00eaff; margin-top:15px;}
         <button class="button stand" onclick="stand()">Stand</button>
     </div>
     <div class="money-box">Money: $<span id="moneyDisplay">0</span></div>
+    <div class="leaderboard-box">
+        <strong>Leaderboard:</strong>
+        <ol id="leaderboardList"></ol>
+    </div>
 </div>
 
 <button id="dailyShopBtn">Daily Shop</button>
@@ -101,35 +107,45 @@ h1 { text-shadow:0 0 15px #00eaff; margin-top:15px;}
 // --------------------
 let deck=[], player=[], dealer=[];
 let playerMoney=parseInt(localStorage.getItem("playerMoney"))||1000;
-let streak=parseInt(localStorage.getItem("streak"))||0;
 let leaderboard=JSON.parse(localStorage.getItem("leaderboard"))||[];
+let inRound=false;
 
-function updateMoneyUI(){ document.getElementById("moneyDisplay").textContent=playerMoney; localStorage.setItem("playerMoney",playerMoney); }
+function updateMoneyUI(){
+    document.getElementById("moneyDisplay").textContent=playerMoney;
+    localStorage.setItem("playerMoney",playerMoney);
+}
+function updateLeaderboardUI(){
+    leaderboard.sort((a,b)=>b-a);
+    let list=document.getElementById("leaderboardList");
+    list.innerHTML="";
+    leaderboard.slice(0,5).forEach(v=>{ let li=document.createElement("li"); li.textContent="$"+v; list.appendChild(li); });
+    localStorage.setItem("leaderboard",JSON.stringify(leaderboard));
+}
 updateMoneyUI();
+updateLeaderboardUI();
 
 // --------------------
 // CARD UTILS
 // --------------------
-function newDeck(){ 
+function newDeck(){
     let suits=["♠","♥","♦","♣"], vals=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
     deck=[];
     for(let s of suits){ for(let v of vals){ deck.push({value:v,suit:s}); } }
     deck.sort(()=>Math.random()-0.5);
 }
-function cardValue(c){ if(c.value==="A")return 11;if(["J","Q","K"].includes(c.value))return 10;return parseInt(c.value);}
-function handValue(hand){ let t=0, aces=0; hand.forEach(c=>{ t+=cardValue(c); if(c.value==="A") aces++; }); while(t>21 && aces>0){t-=10; aces--;} return t;}
+function cardValue(c){ if(c.value==="A")return 11;if(["J","Q","K"].includes(c.value))return 10; return parseInt(c.value);}
+function handValue(hand){ let t=0, aces=0; hand.forEach(c=>{ t+=cardValue(c); if(c.value==="A") aces++;}); while(t>21 && aces>0){ t-=10; aces--; } return t;}
 function renderHands(){
     const dealerDiv=document.getElementById("dealerHand");
     const playerDiv=document.getElementById("playerHand");
     dealerDiv.innerHTML=""; playerDiv.innerHTML="";
-    dealer.forEach(c=>{let d=document.createElement("div"); d.className="card animate"; d.textContent=c.value+c.suit; dealerDiv.appendChild(d);});
-    player.forEach(c=>{let d=document.createElement("div"); d.className="card animate"; d.textContent=c.value+c.suit; playerDiv.appendChild(d);});
+    dealer.forEach(c=>{ let d=document.createElement("div"); d.className="card animate"; d.textContent=c.value+c.suit; dealerDiv.appendChild(d);});
+    player.forEach(c=>{ let d=document.createElement("div"); d.className="card animate"; d.textContent=c.value+c.suit; playerDiv.appendChild(d);});
 }
 
 // --------------------
 // GAME LOGIC
 // --------------------
-let inRound=false;
 function deal(){
     if(inRound) return;
     inRound=true;
@@ -141,7 +157,7 @@ function deal(){
 function hit(){
     if(!inRound) return;
     player.push(deck.pop()); renderHands();
-    if(handValue(player)>21){ finish("BUSTED",-100);}
+    if(handValue(player)>21) finish("BUSTED",-100);
 }
 function stand(){
     if(!inRound) return;
@@ -151,14 +167,15 @@ function stand(){
     if(p>21){ finish("BUSTED",-100); return;}
     if(d>21||p>d){ finish("YOU WIN",100);} 
     else if(p<d){ finish("YOU LOSE",-100);} 
-    else { finish("PUSH",0);}
+    else{ finish("PUSH",0);}
 }
 function finish(msg,amount){
     inRound=false;
     playerMoney+=amount;
     updateMoneyUI();
+    leaderboard.push(playerMoney);
+    updateLeaderboardUI();
     showSplash(msg);
-    updateLeaderboard();
 }
 
 // --------------------
@@ -169,16 +186,6 @@ function showSplash(msg){
     s.textContent=msg;
     s.style.display="flex";
     setTimeout(()=>{ s.style.display="none"; },1200);
-}
-
-// --------------------
-// LEADERBOARD
-// --------------------
-function updateLeaderboard(){
-    leaderboard.push(playerMoney);
-    leaderboard.sort((a,b)=>b-a);
-    leaderboard=leaderboard.slice(0,5);
-    localStorage.setItem("leaderboard",JSON.stringify(leaderboard));
 }
 
 // --------------------
@@ -209,7 +216,6 @@ function updateShopStatus(){
 }
 claimBtn.onclick=()=>{
     playerMoney+=500;
-    streak++; localStorage.setItem("streak",streak);
     updateMoneyUI();
     localStorage.setItem("lastClaimTime",Date.now());
     updateShopStatus();
