@@ -1,10 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Cyber Blackjack</title>
-
 
 <style>
   body {
@@ -18,7 +17,6 @@
     overflow-x: hidden;
   }
 
-
   /* NEON TITLE */
   .title {
     margin-top: 25px;
@@ -26,7 +24,6 @@
     font-weight: bold;
     text-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff;
   }
-
 
   /* GAME CONTAINER */
   .table {
@@ -40,7 +37,6 @@
     border: 1px solid #00eaff55;
   }
 
-
   /* Dealer & Player area */
   .section-label {
     font-size: 18px;
@@ -48,14 +44,12 @@
     opacity: .8;
   }
 
-
   .hand {
     min-height: 140px;
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
   }
-
 
   /* Cards */
   .card {
@@ -71,12 +65,10 @@
     box-shadow: 0 0 10px #00eaff44;
   }
 
-
   .card.hidden {
     background: #00121c;
     border: 2px solid #003644;
   }
-
 
   /* HUD */
   .hud {
@@ -86,7 +78,6 @@
     font-size: 20px;
   }
 
-
   /* Buttons */
   .btn-area {
     display: flex;
@@ -94,7 +85,6 @@
     justify-content: center;
     margin-top: 10px;
   }
-
 
   .btn {
     padding: 12px 22px;
@@ -110,16 +100,13 @@
     box-shadow: 0 0 12px #00eaffaa;
   }
 
-
   .btn:hover {
     transform: scale(1.06);
   }
 
-
   .btn:active {
     transform: scale(.95);
   }
-
 
   /* Message */
   .result {
@@ -133,32 +120,25 @@
 </head>
 <body>
 
-
 <div class="title">CYBER BLACKJACK</div>
 
-
 <div class="table">
-
 
   <div class="section-label">Dealer</div>
   <div id="dealerHand" class="hand"></div>
 
-
   <div class="section-label">Player</div>
   <div id="playerHand" class="hand"></div>
-
 
   <div class="hud">
     <div>Balance: $<span id="balance">500</span></div>
     <div>Bet: $<span id="bet">50</span></div>
   </div>
 
-
   <div class="btn-area">
     <button class="btn" onclick="changeBet(-10)">-</button>
     <button class="btn" onclick="changeBet(10)">+</button>
   </div>
-
 
   <div class="btn-area">
     <button class="btn" onclick="deal()">Deal</button>
@@ -166,12 +146,9 @@
     <button class="btn" onclick="stand()">Stand</button>
   </div>
 
-
   <div class="result" id="result"></div>
 
-
 </div>
-
 
 <script>
   let deck = [];
@@ -181,7 +158,6 @@
   let bet = 50;
   let inRound = false;
   let hiddenCard = true;
-
 
   function buildDeck() {
     const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -194,7 +170,6 @@
     }
     deck.sort(()=>Math.random()-0.5);
   }
-
 
   function getValue(hand) {
     let total = 0, aces = 0;
@@ -210,13 +185,11 @@
     return total;
   }
 
-
   function renderHands() {
     const dealerDiv = document.getElementById("dealerHand");
     const playerDiv = document.getElementById("playerHand");
     dealerDiv.innerHTML = "";
     playerDiv.innerHTML = "";
-
 
     dealer.forEach((c,i)=>{
       let d = document.createElement("div");
@@ -226,7 +199,6 @@
       dealerDiv.appendChild(d);
     });
 
-
     player.forEach(c=>{
       let d = document.createElement("div");
       d.className = "card";
@@ -235,31 +207,25 @@
     });
   }
 
-
   function changeBet(x) {
     if (inRound) return;
     bet = Math.max(10, Math.min(500, bet + x));
     document.getElementById("bet").textContent = bet;
   }
 
-
   function deal() {
     if (inRound) return;
     if (balance < bet) return alert("Not enough money!");
-
 
     inRound = true;
     hiddenCard = true;
     document.getElementById("result").textContent = "";
 
-
     buildDeck();
     dealer = [deck.pop(), deck.pop()];
     player = [deck.pop(), deck.pop()];
 
-
     renderHands();
-
 
     if (getValue(player) === 21) {
       hiddenCard = false;
@@ -267,7 +233,6 @@
       finish("Blackjack! You win.", bet * 1.5);
     }
   }
-
 
   function hit() {
     if (!inRound) return;
@@ -280,7 +245,6 @@
     }
   }
 
-
   function stand() {
     if (!inRound) return;
     hiddenCard = false;
@@ -288,24 +252,20 @@
     dealerPlay();
   }
 
-
   function dealerPlay() {
     while (getValue(dealer) < 17) {
       dealer.push(deck.pop());
       renderHands();
     }
 
-
     const playerV = getValue(player);
     const dealerV = getValue(dealer);
-
 
     if (dealerV > 21) finish("Dealer busts! You win.", bet);
     else if (playerV > dealerV) finish("You win!", bet);
     else if (playerV < dealerV) finish("You lose.", -bet);
     else finish("Push (tie).", 0);
   }
-
 
   function finish(msg, amount) {
     inRound = false;
@@ -315,17 +275,5 @@
   }
 </script>
 
-
 </body>
-
 </html>
-<button id="dailyShopBtn" class="shop-button">Daily Shop</button>
-
-<div id="shopModal" class="shop-modal hidden">
-  <div class="shop-content">
-    <h2>Daily Shop</h2>
-    <p id="shopStatus">Loading...</p>
-    <button id="claimRewardBtn" class="claim-button hidden">Claim 500 Chips</button>
-    <button id="closeShopBtn" class="close-button">Close</button>
-  </div>
-</div>
